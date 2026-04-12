@@ -1,5 +1,7 @@
 plugins {
     id 'java-library'
+    id 'idea'
+    id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.80'
 }
 
@@ -8,8 +10,20 @@ group = mod_group_id
 
 repositories {
     mavenLocal()
-    maven { url = "https://repo.spongepowered.org/repository/maven-public/" }
     mavenCentral()
+    maven { url = "https://repo.spongepowered.org/repository/maven-public/" }
+    
+    
+    ivy {
+        setUrl('https://download.nodecdn.net/containers/reforged/universal/release')
+        metadataSources {
+            artifact()
+            gradleMetadata()
+        }
+        patternLayout {
+            artifact('[artifact].[ext]')
+        }
+    }
 }
 
 neoForge {
@@ -29,6 +43,6 @@ neoForge {
 
 dependencies {
     var pixelmonVersion = "9.3.14"
-    implementation "pixelmon:Pixelmon-1.21.1-${pixelmonVersion}-universal:${pixelmonVersion}"
-    implementation 'org.yaml:snakeyaml:2.6'
+    compileOnly "pixelmon:Pixelmon-1.21.1-${pixelmonVersion}-universal:${pixelmonVersion}@jar"
+    compileOnly 'org.yaml:snakeyaml:2.6'
 }
