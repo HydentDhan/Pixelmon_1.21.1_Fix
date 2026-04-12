@@ -26,3 +26,4 @@ run-data
 repolibs/
 build/
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
