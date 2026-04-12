@@ -1,0 +1,33 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="GNU AGPLv3"
+issueTrackerURL=""
+showAsResourcePack=false
+
+[[mods]]
+modId="pixelmonfix"
+version="${file.jarVersion}"
+displayName="Pixelmon 1.21.1 Fixes"
+authors="Dhanraj"
+description="Centralized server-side module to patch Pixelmon 1.21.1 bugs and progression logic."
+
+[[dependencies.pixelmonfix]]
+modId="neoforge"
+type="required"
+versionRange="[21.1,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.pixelmonfix]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.pixelmonfix]]
+modId="pixelmon"
+type="required"
+versionRange="[9.3.0,)"
+ordering="AFTER"
+side="BOTH"
