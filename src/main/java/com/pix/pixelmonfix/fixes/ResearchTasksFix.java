@@ -70,7 +70,7 @@ public class ResearchTasksFix {
             cacheKeys();
             fireInteractionEvents(player, pokestopEvents);
         } catch (Exception e) {
-            // Suppress minor errors
+
         }
     }
 
@@ -93,7 +93,7 @@ public class ResearchTasksFix {
                     }
                 }
                 else if (participant.isTrainer()) {
-                    // FIX: Iterate through allPokemon manually to check if any are still alive
+
                     boolean hasAlive = false;
                     for (PixelmonWrapper pw : participant.allPokemon) {
                         if (pw.isAlive()) {

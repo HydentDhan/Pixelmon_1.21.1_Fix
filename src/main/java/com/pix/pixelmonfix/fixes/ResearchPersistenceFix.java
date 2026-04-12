@@ -22,7 +22,7 @@ public class ResearchPersistenceFix {
                 if (research != null) {
                     CompoundTag data = research.serialize();
                     if (data != null && !data.isEmpty()) {
-                        // Forcefully bind the research data to the vanilla Minecraft save loop
+
                         player.getPersistentData().put("pixelmonfix_research_backup", data);
                     }
                 }

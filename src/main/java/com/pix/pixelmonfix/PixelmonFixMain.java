@@ -2,6 +2,7 @@ package com.pix.pixelmonfix;
 
 import com.pixelmonmod.pixelmon.Pixelmon;
 import com.pix.pixelmonfix.commands.PixelmonFixCommand;
+import com.pix.pixelmonfix.commands.FixDexCommand;
 import com.pix.pixelmonfix.config.ConfigManager;
 import com.pix.pixelmonfix.fixes.CaptureFix;
 import com.pix.pixelmonfix.fixes.ExpBarFix;
@@ -29,7 +30,6 @@ public class PixelmonFixMain {
 
         NeoForge.EVENT_BUS.register(this);
         NeoForge.EVENT_BUS.register(new ResearchPersistenceFix());
-
         Pixelmon.EVENT_BUS.register(new PokedexFix());
         Pixelmon.EVENT_BUS.register(new CaptureFix());
         Pixelmon.EVENT_BUS.register(new RaidHelperFix());
@@ -41,5 +41,6 @@ public class PixelmonFixMain {
     @SubscribeEvent
     public void onCommandRegister(RegisterCommandsEvent event) {
         PixelmonFixCommand.register(event.getDispatcher());
+        FixDexCommand.register(event.getDispatcher());
     }
 }
