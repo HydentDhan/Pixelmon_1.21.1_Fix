@@ -28,6 +28,7 @@ neoForge {
 }
 
 dependencies {
-    compileOnly files('libs/Pixelmon-1.21.1-9.3.14-universal.jar')
-    compileOnly 'org.yaml:snakeyaml:2.2'
+    var pixelmonVersion = "9.3.14"
+    implementation "pixelmon:Pixelmon-1.21.1-${pixelmonVersion}-universal:${pixelmonVersion}"
+    implementation 'org.yaml:snakeyaml:2.6'
 }
