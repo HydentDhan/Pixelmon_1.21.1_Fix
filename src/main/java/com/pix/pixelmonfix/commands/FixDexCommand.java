@@ -17,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -68,30 +69,31 @@ public class FixDexCommand {
         try {
             PlayerPartyStorage party = StorageProxy.getPartyNow(targetPlayer);
 
-            if (party == null || party.playerData == null) {
+            if (party == null) {
                 source.sendFailure(Component.literal("Could not load party data for player: " + targetPlayer.getScoreboardName()));
                 return false;
             }
 
             PlayerDexData targetDexData = null;
 
+            try {
+                Method getPokedex = party.getClass().getMethod("getPokedex");
+                targetDexData = (PlayerDexData) getPokedex.invoke(party);
+            } catch (Exception ignored) {}
 
-            for (Field field : party.playerData.getClass().getDeclaredFields()) {
-                field.setAccessible(true);
-                Object value = field.get(party.playerData);
-
-                if (value instanceof PlayerDexData) {
-                    targetDexData = (PlayerDexData) value;
-                    break;
-                } else if (value instanceof Map) {
-                    Map<?, ?> map = (Map<?, ?>) value;
-                    for (Object val : map.values()) {
-                        if (val instanceof PlayerDexData) {
-                            targetDexData = (PlayerDexData) val;
+            if (targetDexData == null) {
+                Class<?> clazz = party.getClass();
+                while (clazz != null && clazz != Object.class) {
+                    for (Field field : clazz.getDeclaredFields()) {
+                        field.setAccessible(true);
+                        Object value = field.get(party);
+                        if (value instanceof PlayerDexData) {
+                            targetDexData = (PlayerDexData) value;
                             break;
                         }
                     }
                     if (targetDexData != null) break;
+                    clazz = clazz.getSuperclass();
                 }
             }
 
@@ -100,14 +102,12 @@ public class FixDexCommand {
                 return false;
             }
 
-
             Field statusField = DexData.class.getDeclaredField("status");
             statusField.setAccessible(true);
             Map<PokemonBase, PokedexState> statusMap = (Map<PokemonBase, PokedexState>) statusField.get(targetDexData);
 
             int actualSeen = 0;
             int actualCaught = 0;
-
 
             for (PokedexState state : statusMap.values()) {
                 if (state.status() == PokedexRegistrationStatus.CAUGHT) {
@@ -118,7 +118,6 @@ public class FixDexCommand {
                 }
             }
 
-
             Field seenField = DexData.class.getDeclaredField("seenCount");
             seenField.setAccessible(true);
             seenField.set(targetDexData, actualSeen);
@@ -127,10 +126,8 @@ public class FixDexCommand {
             caughtField.setAccessible(true);
             caughtField.set(targetDexData, actualCaught);
 
-
             targetDexData.initialize(targetPlayer);
             party.setNeedsSaving();
-
 
             final int finalCaught = actualCaught;
             final int finalSeen = actualSeen;

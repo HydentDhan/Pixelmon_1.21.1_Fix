@@ -9,9 +9,11 @@ import com.pixelmonmod.pixelmon.api.registries.PixelmonInteractionEvents;
 import com.pixelmonmod.pixelmon.api.storage.research.ResearchStorage;
 import com.pixelmonmod.pixelmon.api.storage.research.ResearchStorageProxy;
 import com.pixelmonmod.pixelmon.battles.controller.participants.BattleParticipant;
+import com.pixelmonmod.pixelmon.battles.controller.participants.EntityParticipant;
 import com.pixelmonmod.pixelmon.battles.controller.participants.PlayerParticipant;
 import com.pixelmonmod.pixelmon.battles.controller.participants.WildPixelmonParticipant;
 import com.pixelmonmod.pixelmon.battles.controller.participants.PixelmonWrapper;
+import com.pixelmonmod.pixelmon.entities.npcs.NPC;
 import com.pix.pixelmonfix.PixelmonFixMain;
 import com.pix.pixelmonfix.config.ConfigManager;
 import net.minecraft.core.Holder;
@@ -60,7 +62,7 @@ public class ResearchTasksFix {
     }
 
     @SubscribeEvent
-    public void onPokeStopSpin(PokeStopEvent event) {
+    public void onPokeStopSpin(PokeStopEvent.Drops.Post event) {
         try {
             if (!ConfigManager.CONFIG.enableResearchFix) return;
 
@@ -68,7 +70,8 @@ public class ResearchTasksFix {
             ServerPlayer player = (ServerPlayer) event.getPlayer();
 
             cacheKeys();
-            fireInteractionEvents(player, pokestopEvents);
+
+            fireInteractionEvents(player, pokestopEvents, null);
         } catch (Exception e) {
 
         }
@@ -81,6 +84,7 @@ public class ResearchTasksFix {
 
             boolean wasBossDefeated = false;
             boolean wasTrainerDefeated = false;
+            NPC defeatedNPC = null;
 
             for (BattleParticipant participant : event.getBattleController().participants) {
 
@@ -93,7 +97,6 @@ public class ResearchTasksFix {
                     }
                 }
                 else if (participant.isTrainer()) {
-
                     boolean hasAlive = false;
                     for (PixelmonWrapper pw : participant.allPokemon) {
                         if (pw.isAlive()) {
@@ -103,6 +106,13 @@ public class ResearchTasksFix {
                     }
                     if (!hasAlive) {
                         wasTrainerDefeated = true;
+
+
+                        if (participant instanceof EntityParticipant ep) {
+                            if (ep.getEntity() instanceof NPC npc) {
+                                defeatedNPC = npc;
+                            }
+                        }
                     }
                 }
             }
@@ -113,10 +123,11 @@ public class ResearchTasksFix {
             for (BattleParticipant participant : event.getBattleController().participants) {
                 if (participant instanceof PlayerParticipant playerParticipant && playerParticipant.player != null) {
                     if (wasBossDefeated) {
-                        fireInteractionEvents(playerParticipant.player, bossEvents);
+                        fireInteractionEvents(playerParticipant.player, bossEvents, null);
                     }
                     if (wasTrainerDefeated) {
-                        fireInteractionEvents(playerParticipant.player, trainerEvents);
+
+                        fireInteractionEvents(playerParticipant.player, trainerEvents, defeatedNPC);
                     }
                 }
             }
@@ -125,24 +136,31 @@ public class ResearchTasksFix {
         }
     }
 
-    private void fireInteractionEvents(ServerPlayer player, List<ResourceKey<InteractionEvent>> eventKeys) {
-        try {
-            ResourceKey<Registry<InteractionEvent>> registryKey = ResourceKey.createRegistryKey(ResourceLocation.parse("pixelmon:interaction_event"));
-            Registry<InteractionEvent> registry = player.registryAccess().registry(registryKey).orElse(null);
+    private void fireInteractionEvents(ServerPlayer player, List<ResourceKey<InteractionEvent>> eventKeys, NPC optionalNpc) {
 
-            if (registry == null) return;
+        player.server.execute(() -> {
+            try {
+                ResourceKey<Registry<InteractionEvent>> registryKey = ResourceKey.createRegistryKey(ResourceLocation.parse("pixelmon:interaction_event"));
+                Registry<InteractionEvent> registry = player.registryAccess().registry(registryKey).orElse(null);
 
-            ResearchStorage research = ResearchStorageProxy.getStorageNow(player);
-            if (research != null) {
-                StoredContext context = StoredContext.of(ContextKeys.PLAYER, player);
+                if (registry == null) return;
 
-                for (ResourceKey<InteractionEvent> key : eventKeys) {
-                    Optional<Holder.Reference<InteractionEvent>> holder = registry.getHolder(key);
-                    holder.ifPresent(interactionEventReference -> research.handleInteractionEvent(interactionEventReference, context));
+                ResearchStorage research = ResearchStorageProxy.getStorageNow(player);
+                if (research != null) {
+                    StoredContext context = StoredContext.of(ContextKeys.PLAYER, player);
+
+
+                    if (optionalNpc != null) {
+                        context.setContext(ContextKeys.NPC, optionalNpc);
+                    }
+
+                    for (ResourceKey<InteractionEvent> key : eventKeys) {
+                        Optional<Holder.Reference<InteractionEvent>> holder = registry.getHolder(key);
+                        holder.ifPresent(interactionEventReference -> research.handleInteractionEvent(interactionEventReference, context));
+                    }
                 }
+            } catch (Exception e) {
             }
-        } catch (Exception e) {
-
-        }
+        });
     }
 }
