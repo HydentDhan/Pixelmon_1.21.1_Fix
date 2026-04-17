@@ -19,7 +19,7 @@ public class GolemBossFix {
                     pixelmon.removeAllEffects();
                     pixelmon.getPokemon().setPalette("none");
                 }
-            }
+            }//
         } catch (Exception e) {
         }
     }
